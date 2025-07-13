@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
 import { BookOpen } from "lucide-react"
+import { toast } from "sonner"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -23,17 +23,12 @@ export default function RegisterPage() {
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
-        variant: "destructive",
-      })
+      toast( "As senhas não coincidem")
       return
     }
 
@@ -57,24 +52,13 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast({
-          title: "Sucesso!",
-          description: "Conta criada com sucesso. Faça login para continuar.",
-        })
+        toast( "Conta criada com sucesso. Faça login para continuar.")
         router.push("/login")
       } else {
-        toast({
-          title: "Erro",
-          description: data.error || "Erro ao criar conta",
-          variant: "destructive",
-        })
+        toast( data.error || "Erro ao criar conta")
       }
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro de conexão. Tente novamente.",
-        variant: "destructive",
-      })
+      toast("Erro de conexão. Tente novamente.")
     } finally {
       setLoading(false)
     }

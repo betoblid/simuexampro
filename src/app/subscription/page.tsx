@@ -5,25 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/hooks/use-toast"
 import { CheckCircle, BookOpen, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function SubscriptionPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const router = useRouter()
-  const { toast } = useToast()
 
   const searchParams = useSearchParams()
 
   useEffect(() => {
     const canceled = searchParams.get("canceled")
     if (canceled === "true") {
-      toast({
-        title: "Pagamento Cancelado",
-        description: "Você pode tentar novamente quando quiser.",
-        variant: "destructive",
-      })
+      toast( "Você pode tentar novamente quando quiser.")
     }
   }, [searchParams, toast])
 
@@ -86,18 +81,10 @@ export default function SubscriptionPage() {
         // Redirect to Stripe Checkout
         window.location.href = data.url
       } else {
-        toast({
-          title: "Erro",
-          description: data.error || "Erro ao processar assinatura",
-          variant: "destructive",
-        })
+        toast( data.error || "Erro ao processar assinatura")
       }
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro de conexão. Tente novamente.",
-        variant: "destructive",
-      })
+      toast("Erro de conexão. Tente novamente.")
     } finally {
       setLoading(null)
     }

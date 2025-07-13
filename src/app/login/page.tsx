@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
 import { BookOpen } from "lucide-react"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -19,7 +19,6 @@ export default function LoginPage() {
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,24 +36,13 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast({
-          title: "Sucesso!",
-          description: "Login realizado com sucesso.",
-        })
+        toast( "Login realizado com sucesso.")
         router.push("/dashboard")
       } else {
-        toast({
-          title: "Erro",
-          description: data.error || "Credenciais inválidas",
-          variant: "destructive",
-        })
+        toast( data.error || "Credenciais inválidas")
       }
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro de conexão. Tente novamente.",
-        variant: "destructive",
-      })
+      toast("Erro de conexão. Tente novamente.")
     } finally {
       setLoading(false)
     }

@@ -2,8 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { pool } from "@/lib/db"
 import { verifyToken } from "@/lib/auth"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
+    const examId = Number.parseInt(id)
+
     const token = request.cookies.get("auth-token")?.value
 
     if (!token) {
@@ -14,8 +17,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     if (!decoded) {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 })
     }
-
-    const examId = Number.parseInt(params.id)
 
     // Check if user can take exam (subscription and monthly limit)
     const currentDate = new Date()

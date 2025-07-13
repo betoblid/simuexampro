@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { BookOpen, Clock, ArrowLeft, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+
 
 interface Question {
   number: number
@@ -31,7 +32,13 @@ interface ExamData {
   total_questions: number
 }
 
-export default function ExamPage() {
+type PageProps = {
+  params: {
+    id: string
+  }
+}
+
+export function ExamClient({ params }: PageProps) {
   const [examData, setExamData] = useState<ExamData | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<string[]>([])
@@ -40,7 +47,6 @@ export default function ExamPage() {
   const [submitting, setSubmitting] = useState(false)
   const [examStarted, setExamStarted] = useState(false)
   const router = useRouter()
-  const params = useParams()
 
   useEffect(() => {
     fetchExamData()
@@ -116,10 +122,10 @@ export default function ExamPage() {
         )
       } else {
         const error = await response.json()
-        toast(error.error || "Erro ao enviar prova")
+        toast( error.error || "Erro ao enviar prova")
       }
     } catch (error) {
-      toast( "Erro de conexão")
+      toast("Erro de conexão")
     } finally {
       setSubmitting(false)
     }

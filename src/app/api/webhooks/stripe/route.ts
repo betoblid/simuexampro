@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
       console.error("Webhook signature verification failed:", err)
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
     }
-
+    
+    console.log(`Received event: ${event.data.object.object}`)
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
@@ -80,8 +81,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     // Get subscription details from Stripe
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
 
-    console.log(`processo de checkout sessão para usuário ${userId}, plano ${planName}`)
-    console.log("Subscription detalhes:", subscription)
+   
     // Deactivate any existing active subscriptions for this user
     await pool.query(
       `UPDATE user_subscriptions 
@@ -122,18 +122,22 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  if (invoice.subscription) {
-    await pool.query(
-      `UPDATE user_subscriptions 
-       SET status = 'active', updated_at = CURRENT_TIMESTAMP
-       WHERE stripe_subscription_id = $1`,
-      [invoice.subscription],
-    )
-  }
+
+  console.log(`Payment succeeded for invoice ${invoice.object}`)
+  console.log(`Payment succeeded for invoice ${invoice.object}`)
+ if ('subscription' in invoice && invoice.subscription) {
+  await pool.query(
+    `UPDATE user_subscriptions
+     SET status = 'active', updated_at = CURRENT_TIMESTAMP
+     WHERE stripe_subscription_id = $1`,
+    [invoice.subscription]
+  )
+}
+
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  if (invoice.subscription) {
+  if ('subscription' in invoice && invoice.subscription) {
     await pool.query(
       `UPDATE user_subscriptions 
        SET status = 'past_due', updated_at = CURRENT_TIMESTAMP

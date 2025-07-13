@@ -1,17 +1,18 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Trophy, CheckCircle, XCircle, Home, RotateCcw } from "lucide-react"
 
-export default function ExamResultPage({ params }: { params: { id: string } }) {
+export default function ExamResultPage() {
   const searchParams = useSearchParams()
   const score = Number.parseInt(searchParams.get("score") || "0")
   const total = Number.parseInt(searchParams.get("total") || "0")
   const percentage = Number.parseFloat(searchParams.get("percentage") || "0")
+  const params = useParams()
 
   const getPerformanceColor = () => {
     if (percentage >= 80) return "text-green-600"

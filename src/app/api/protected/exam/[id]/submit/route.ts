@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { pool } from "@/lib/db"
 import { verifyToken } from "@/lib/auth"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const token = request.cookies.get("auth-token")?.value
 
@@ -15,7 +15,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Token inválido" }, { status: 401 })
     }
 
-    const examId = Number.parseInt(params.id)
+    const { id } = await params
+    const examId = Number.parseInt(id)
+
     const { answers } = await request.json()
 
     // Get exam data
