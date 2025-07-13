@@ -26,7 +26,7 @@ export default function SubscriptionPage() {
     {
       id: "junior",
       name: "Júnior",
-      price: "R$ 10",
+      price: "R$ 200",
       period: "/mês",
       maxExams: 3,
       features: ["Até 3 provas mensais", "Histórico de resultados", "Suporte básico", "Acesso a todas as provas"],
@@ -34,7 +34,7 @@ export default function SubscriptionPage() {
     {
       id: "pleno",
       name: "Pleno",
-      price: "R$ 30",
+      price: "R$ 350",
       period: "/mês",
       maxExams: 5,
       features: [
@@ -49,7 +49,7 @@ export default function SubscriptionPage() {
     {
       id: "senior",
       name: "Sênior",
-      price: "R$ 50",
+      price: "R$ 500",
       period: "/mês",
       maxExams: 10,
       features: [
