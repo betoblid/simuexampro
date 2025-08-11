@@ -7,26 +7,26 @@ import { CheckCircle, BookOpen, Users, Trophy } from "lucide-react"
 export default function HomePage() {
   const plans = [
     {
-      name: "Júnior",
-      price: "US$ 200",
-      period: "/mês",
+      name: "Junior",
+      price: "$ 200",
+      period: "/month",
       maxExams: 3,
-      features: ["Até 3 provas mensais", "Histórico de resultados", "Suporte básico"],
+      features: ["Up to 3 monthly tests", "Historical results", "Basic Support"],
     },
     {
-      name: "Pleno",
-      price: "US$ 350",
-      period: "/mês",
+      name: "Full ",
+      price: "$ 350",
+      period: "/month",
       maxExams: 5,
-      features: ["Até 5 provas mensais", "Histórico detalhado", "Suporte prioritário", "Análise de desempenho"],
+      features: ["Up to 5 monthly tests", "Detailed history", "Priority Support", "Basic Support"],
       popular: true,
     },
     {
-      name: "Sênior",
+      name: "Senior",
       price: "US$ 500",
-      period: "/mês",
+      period: "/month",
       maxExams: 10,
-      features: ["Até 10 provas mensais", "Relatórios avançados", "Suporte premium", "Simulados exclusivos"],
+      features: ["Up to 10 monthly tests", "Detailed history", "Premium Support", "Exclusive simulations"],
     },
   ]
 
@@ -42,10 +42,10 @@ export default function HomePage() {
             </div>
             <div className="flex space-x-4">
               <Link href="/login">
-                <Button variant="ghost">Entrar</Button>
+                <Button variant="ghost">Enter</Button>
               </Link>
               <Link href="/register">
-                <Button>Cadastrar</Button>
+                <Button>Register</Button>
               </Link>
             </div>
           </div>
@@ -55,20 +55,19 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="py-20 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-gray-100 mb-6">Plataforma de Provas Online</h2>
+          <h2 className="text-4xl font-bold text-gray-100 mb-6">Online Evidence Platform</h2>
           <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
-            Prepare-se para seus exames com nossa plataforma completa de provas simuladas. Escolha seu plano e comece a
-            estudar hoje mesmo!
+           Prepare for your exams with our complete mock exam platform. Choose your plan and start studying today!
           </p>
           <div className="flex justify-center space-x-4">
             <Link href="/register">
               <Button size="lg" className="px-8">
-                Começar Agora
+               Get Started
               </Button>
             </Link>
             <Link href="#plans">
               <Button variant="default" size="lg" className="px-8 bg-transparent text-white border-white hover:bg-white hover:text-black">
-                Ver Planos
+              View Plans
               </Button>
             </Link>
           </div>
@@ -79,23 +78,23 @@ export default function HomePage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Por que escolher nossa plataforma?</h3>
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">Why choose our platform?</h3>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <h4 className="text-xl font-semibold mb-2">Milhares de Questões</h4>
-              <p className="text-gray-600">Banco de questões atualizado com provas reais e simulados exclusivos</p>
+              <h4 className="text-xl font-semibold mb-2">Thousands of Questions</h4>
+              <p className="text-gray-600">Updated question bank with real tests and exclusive mock tests</p>
             </div>
             <div className="text-center">
               <Trophy className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <h4 className="text-xl font-semibold mb-2">Acompanhe seu Progresso</h4>
-              <p className="text-gray-600">Relatórios detalhados e histórico completo de suas tentativas</p>
+              <h4 className="text-xl font-semibold mb-2">Track Your Progress</h4>
+              <p className="text-gray-600">Detailed reports and complete history of your attempts</p>
             </div>
             <div className="text-center">
               <CheckCircle className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <h4 className="text-xl font-semibold mb-2">Resultados Instantâneos</h4>
-              <p className="text-gray-600">Correção automática e feedback imediato para melhorar seu desempenho</p>
+              <h4 className="text-xl font-semibold mb-2">Instant Results</h4>
+              <p className="text-gray-600">Automatic correction and immediate feedback to improve your performance</p>
             </div>
           </div>
         </div>
@@ -105,15 +104,15 @@ export default function HomePage() {
       <section id="plans" className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">Escolha seu Plano</h3>
-            <p className="text-xl text-gray-600">Planos flexíveis para atender suas necessidades de estudo</p>
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">Choose your Plan</h3>
+            <p className="text-xl text-gray-600">Flexible plans to meet your study needs</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {plans.map((plan, index) => (
               <Card key={index} className={`relative ${plan.popular ? "border-blue-500 shadow-lg" : ""}`}>
                 {plan.popular && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
-                    Mais Popular
+                    Most popular
                   </Badge>
                 )}
                 <CardHeader className="text-center">
@@ -134,7 +133,7 @@ export default function HomePage() {
                   </ul>
                   <Link href="/register">
                     <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                      Escolher Plano
+                     Choose Plan
                     </Button>
                   </Link>
                 </CardContent>
@@ -151,8 +150,8 @@ export default function HomePage() {
             <BookOpen className="h-8 w-8 text-blue-400 mr-3" />
             <h4 className="text-2xl font-bold">ProvaOnline</h4>
           </div>
-          <p className="text-gray-400 mb-4">Sua plataforma completa para preparação de exames</p>
-          <p className="text-gray-500 text-sm">© 2024 ProvaOnline. Todos os direitos reservados.</p>
+          <p className="text-gray-400 mb-4">Your all-in-one platform for exam preparation</p>
+          <p className="text-gray-500 text-sm">&copy; 2024 ProvaOnline. All rights reserved.</p>
         </div>
       </footer>
     </div>

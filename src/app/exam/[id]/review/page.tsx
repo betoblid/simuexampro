@@ -1,6 +1,6 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,7 +21,7 @@ interface DetailedResult {
   isCorrect: boolean
 }
 
-export default function ExamReviewPage({ params }: { params: { id: string } }) {
+export default function ExamReviewPage() {
   const searchParams = useSearchParams()
 
   // Get data from URL params
@@ -29,7 +29,7 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
   const total = Number.parseInt(searchParams.get("total") || "0")
   const percentage = Number.parseFloat(searchParams.get("percentage") || "0")
   const examTitle = searchParams.get("title") || "Prova"
-
+  const params = useParams()
   // Parse detailed results from URL (in a real app, you might want to fetch this from an API)
   const detailedResultsParam = searchParams.get("results")
   let detailedResults: DetailedResult[] = []
@@ -97,7 +97,7 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
             <div className="flex items-center">
               <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Revisão da Prova</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Proof Review</h1>
                 <p className="text-gray-600">{examTitle}</p>
               </div>
             </div>
@@ -119,26 +119,26 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Trophy className="h-6 w-6 mr-2 text-blue-600" />
-              Resumo dos Resultados
+              Summary of Results
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600">{total}</div>
-                <div className="text-sm text-gray-600">Total de Questões</div>
+                <div className="text-sm text-gray-600">Total Issues</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-600">{correctAnswers}</div>
-                <div className="text-sm text-gray-600">Acertos</div>
+                <div className="text-sm text-gray-600">Hits</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-red-600">{incorrectAnswers}</div>
-                <div className="text-sm text-gray-600">Erros</div>
+                <div className="text-sm text-gray-600">Errors</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600">{percentage.toFixed(1)}%</div>
-                <div className="text-sm text-gray-600">Aproveitamento</div>
+                <div className="text-sm text-gray-600">Use</div>
               </div>
             </div>
           </CardContent>
@@ -147,24 +147,24 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
         {/* Legend */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-lg">Legenda</CardTitle>
+            <CardTitle className="text-lg">Subtitle</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>Sua resposta correta</span>
+                <span>Your correct answer</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
                 <XCircle className="h-4 w-4 text-red-600" />
-                <span>Sua resposta incorreta</span>
+                <span>Your Incorrect Answer</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-green-600 rounded"></div>
                 <CheckCircle className="h-4 w-4 text-white" />
-                <span>Resposta correta</span>
+                <span>Correct answer</span>
               </div>
             </div>
           </CardContent>
@@ -176,9 +176,9 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
             <Card key={index} className="relative">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">Questão {result.questionNumber}</CardTitle>
+                  <CardTitle className="text-lg">Question {result.questionNumber}</CardTitle>
                   <Badge variant={result.isCorrect ? "default" : "destructive"} className="ml-4">
-                    {result.isCorrect ? "Correta" : "Incorreta"}
+                    {result.isCorrect ? "Correct" : "Incorrect"}
                   </Badge>
                 </div>
                 <CardDescription className="text-base leading-relaxed text-gray-900">{result.question}</CardDescription>
@@ -200,13 +200,13 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
                 {!result.isCorrect && (
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="text-sm text-blue-800">
-                      <strong>Sua resposta:</strong>{" "}
+                      <strong>Your Question:</strong>{" "}
                       {result.userAnswer
                         ? `${getOptionLabel(result.userAnswer)}) ${result.options[result.userAnswer as keyof typeof result.options]}`
-                        : "Não respondida"}
+                        : "Not answered"}
                     </div>
                     <div className="text-sm text-blue-800 mt-1">
-                      <strong>Resposta correta:</strong> {getOptionLabel(result.correctAnswer)}){" "}
+                      <strong>Correct answer:</strong> {getOptionLabel(result.correctAnswer)}){" "}
                       {result.options[result.correctAnswer as keyof typeof result.options]}
                     </div>
                   </div>
@@ -221,13 +221,13 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
           <Link href="/dashboard" className="flex-1">
             <Button variant="outline" className="w-full bg-transparent">
               <Home className="h-4 w-4 mr-2" />
-              Voltar ao Dashboard
+              Back to Dashboard
             </Button>
           </Link>
           <Link href={`/exam/${params.id}`} className="flex-1">
             <Button className="w-full">
               <RotateCcw className="h-4 w-4 mr-2" />
-              Tentar Novamente
+             Try Again
             </Button>
           </Link>
           <Link
@@ -236,7 +236,7 @@ export default function ExamReviewPage({ params }: { params: { id: string } }) {
           >
             <Button variant="outline" className="w-full bg-transparent">
               <Trophy className="h-4 w-4 mr-2" />
-              Ver Resultado
+             See Result
             </Button>
           </Link>
         </div>

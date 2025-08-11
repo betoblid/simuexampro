@@ -47,7 +47,7 @@ export default function SuccessPage() {
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-            <p className="text-gray-600">Processando seu pagamento...</p>
+            <p className="text-gray-600">Processing your payment...</p>
           </CardContent>
         </Card>
       </div>
@@ -63,8 +63,8 @@ export default function SuccessPage() {
               <CheckCircle className="h-16 w-16 text-green-600" />
             </div>
           </div>
-          <CardTitle className="text-3xl text-green-600">Pagamento Confirmado!</CardTitle>
-          <CardDescription className="text-lg">Sua assinatura foi ativada com sucesso</CardDescription>
+          <CardTitle className="text-3xl text-green-600">Payment Confirmed!</CardTitle>
+          <CardDescription className="text-lg">Your subscription has been successfully activated.</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -72,27 +72,27 @@ export default function SuccessPage() {
             <div className="bg-white border border-green-200 rounded-lg p-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center">
                 <BookOpen className="h-5 w-5 mr-2 text-blue-600" />
-                Detalhes da Assinatura
+                Subscription Details
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-600">Plano</p>
+                  <p className="text-sm text-gray-600">Plan</p>
                   <p className="font-medium text-lg">{subscriptionData.plan_name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Provas Mensais</p>
-                  <p className="font-medium text-lg">{subscriptionData.max_exams_per_month} provas</p>
+                  <p className="text-sm text-gray-600">Monthly Tests</p>
+                  <p className="font-medium text-lg">{subscriptionData.max_exams_per_month} Tests</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Status</p>
-                  <p className="font-medium text-lg text-green-600">Ativo</p>
+                  <p className="font-medium text-lg text-green-600">Active</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Próxima Cobrança</p>
+                  <p className="text-sm text-gray-600">Next Billing</p>
                   <p className="font-medium text-lg">
                     {subscriptionData.current_period_end
-                      ? new Date(subscriptionData.current_period_end).toLocaleDateString("pt-BR")
-                      : "Em processamento"}
+                      ? new Date(subscriptionData.current_period_end).toLocaleDateString("en-US")
+                      : "In processing"}
                   </p>
                 </div>
               </div>
@@ -100,12 +100,12 @@ export default function SuccessPage() {
           )}
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">🎉 Parabéns!</h4>
+            <h4 className="font-medium text-blue-800 mb-2">🎉 Congratulations!</h4>
             <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Sua assinatura está ativa e pronta para uso</li>
-              <li>• Você já pode começar a fazer suas provas</li>
-              <li>• Acesse o dashboard para ver todas as opções disponíveis</li>
-              <li>• Em caso de dúvidas, entre em contato com nosso suporte</li>
+             <li>• Your subscription is active and ready to use</li>
+             <li>• You can start taking your tests now</li>
+             <li>• Access the dashboard to see all available options</li>
+             <li>• If you have any questions, contact our support</li>
             </ul>
           </div>
 
@@ -113,19 +113,19 @@ export default function SuccessPage() {
             <Link href="/dashboard" className="flex-1">
               <Button className="w-full bg-green-600 hover:bg-green-700">
                 <ArrowRight className="h-4 w-4 mr-2" />
-                Ir para Dashboard
+                Go to Dashboard
               </Button>
             </Link>
             <Link href="/exam" className="flex-1">
               <Button variant="outline" className="w-full bg-transparent">
                 <BookOpen className="h-4 w-4 mr-2" />
-                Ver Provas Disponíveis
+                View Available Tests
               </Button>
             </Link>
           </div>
 
           <div className="text-center pt-4 border-t">
-            <p className="text-sm text-gray-600">Obrigado por escolher nossa plataforma! 🚀</p>
+            <p className="text-sm text-gray-600">Thank you for choosing our platform! 🚀</p>
           </div>
         </CardContent>
       </Card>

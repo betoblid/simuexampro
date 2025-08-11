@@ -7,7 +7,7 @@ import { Toaster } from "sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Plataforma de Provas Online",
+  title: "Online Exam System",
   description: "Sistema de provas online com planos de assinatura",
 }
 
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="en">
       <body className={inter.className}>
         {children}
         <Toaster />

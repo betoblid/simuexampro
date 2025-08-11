@@ -94,8 +94,8 @@ export default function DashboardPage() {
   }
 
   const getSubscriptionStatus = () => {
-    if (!userData?.subscription) return "Sem plano ativo"
-    return userData.subscription.status === "active" ? "Ativo" : "Inativo"
+    if (!userData?.subscription) return "No active plan"
+    return userData.subscription.status === "active" ? "active" : "Inactive"
   }
 
   if (loading) {
@@ -103,7 +103,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Carregando...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     )
@@ -120,10 +120,10 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900">ProvaOnline</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Olá, {userData?.name}</span>
+              <span className="text-gray-600">Hello, {userData?.name}</span>
               <Button variant="ghost" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
-                Sair
+                Go out
               </Button>
             </div>
           </div>
@@ -138,12 +138,12 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <User className="h-5 w-5 mr-2" />
-                  Perfil
+                  Profile
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-600">Nome</p>
+                  <p className="text-sm text-gray-600">Name</p>
                   <p className="font-medium">{userData?.name}</p>
                 </div>
                 <div>
@@ -151,12 +151,12 @@ export default function DashboardPage() {
                   <p className="font-medium">{userData?.email}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Usuário</p>
+                  <p className="text-sm text-gray-600">User</p>
                   <p className="font-medium">@{userData?.username}</p>
                 </div>
                 {userData?.phone && (
                   <div>
-                    <p className="text-sm text-gray-600">Telefone</p>
+                    <p className="text-sm text-gray-600">Telephone</p>
                     <p className="font-medium">{userData.phone}</p>
                   </div>
                 )}
@@ -168,7 +168,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <CreditCard className="h-5 w-5 mr-2" />
-                  Assinatura
+                  Signature
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <div className="flex justify-between text-sm mb-2">
-                        <span>Provas este mês</span>
+                        <span>Exams this month</span>
                         <span>
                           {userData.monthlyUsage?.exams_taken || 0} / {userData.subscription.max_exams_per_month}
                         </span>
@@ -199,11 +199,11 @@ export default function DashboardPage() {
                         <div className="mt-4">
                           <Link href="/subscription">
                             <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transform transition hover:scale-105">
-                              🚀 Atualizar Plano
+                              🚀 Upgrade Plan
                             </Button>
                           </Link>
                           <p className="text-xs text-center text-gray-500 mt-2">
-                            Você atingiu o limite mensal. Faça upgrade para continuar!
+                            You have reached the monthly limit. Upgrade to continue!
                           </p>
                         </div>
                       )}
@@ -211,9 +211,9 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-600 mb-4">Você não possui um plano ativo</p>
+                    <p className="text-gray-600 mb-4">You do not have an active plan</p>
                     <Link href="/subscription">
-                      <Button>Escolher Plano</Button>
+                      <Button>Choose Plan</Button>
                     </Link>
                   </div>
                 )}
@@ -228,9 +228,9 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <BookOpen className="h-5 w-5 mr-2" />
-                  Provas Disponíveis
+                 Available Tests
                 </CardTitle>
-                <CardDescription>Escolha uma prova para começar</CardDescription>
+                <CardDescription>Choose a proof to start</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4">
@@ -244,10 +244,10 @@ export default function DashboardPage() {
                       <div>
                         {canTakeExam() ? (
                           <Link href={`/exam/${exam.id}`}>
-                            <Button>Iniciar Prova</Button>
+                            <Button>Start Test</Button>
                           </Link>
                         ) : (
-                          <Button disabled>Limite Atingido</Button>
+                          <Button disabled>Limit Reached</Button>
                         )}
                       </div>
                     </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                 {!canTakeExam() && userData?.subscription && (
                   <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-yellow-800 text-sm">
-                      Você atingiu o limite de provas do seu plano este mês. Upgrade seu plano para fazer mais provas.
+                     You reached your plan's proof limit this month. Upgrade your plan to take more tests.
                     </p>
                   </div>
                 )}
@@ -269,7 +269,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Trophy className="h-5 w-5 mr-2" />
-                  Resultados Recentes
+                  Recent Results
                 </CardTitle>
               </CardHeader>
               <CardContent>

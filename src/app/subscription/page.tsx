@@ -18,48 +18,35 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const canceled = searchParams.get("canceled")
     if (canceled === "true") {
-      toast( "Você pode tentar novamente quando quiser.")
+      toast( "You can try again whenever you want. If you have any questions, please contact us.")
     }
   }, [searchParams, toast])
 
   const plans = [
     {
       id: "junior",
-      name: "Júnior",
-      price: "US$ 200",
-      period: "/mês",
+      name: "Junior",
+      price: "$ 200",
+      period: "/month",
       maxExams: 3,
-      features: ["Até 3 provas mensais", "Histórico de resultados", "Suporte básico", "Acesso a todas as provas"],
+       features: ["Up to 3 monthly tests", "Historical results", "Basic Support"],
     },
     {
       id: "pleno",
-      name: "Pleno",
-      price: "US$ 350",
-      period: "/mês",
+      name: "Full",
+       price: "$ 350",
+      period: "/month",
       maxExams: 5,
-      features: [
-        "Até 5 provas mensais",
-        "Histórico detalhado",
-        "Suporte prioritário",
-        "Análise de desempenho",
-        "Relatórios mensais",
-      ],
+      features: ["Up to 5 monthly tests", "Detailed history", "Priority Support", "Basic Support"],
       popular: true,
     },
     {
       id: "senior",
-      name: "Sênior",
-      price: "US$ 500",
-      period: "/mês",
+      name: "Senior",
+       price: "$ 500",
+      period: "/month",
       maxExams: 10,
-      features: [
-        "Até 10 provas mensais",
-        "Relatórios avançados",
-        "Suporte premium",
-        "Simulados exclusivos",
-        "Análise comparativa",
-        "Acesso antecipado a novas provas",
-      ],
+      features: ["Up to 10 monthly tests", "Detailed history", "Premium Support", "Exclusive simulations"],
     },
   ]
 
@@ -81,10 +68,10 @@ export default function SubscriptionPage() {
         // Redirect to Stripe Checkout
         window.location.href = data.url
       } else {
-        toast( data.error || "Erro ao processar assinatura")
+        toast( data.error || "Error processing signaturen. Please try again.")
       }
     } catch (error) {
-      toast("Erro de conexão. Tente novamente.")
+      toast("Connection error. Please try again.")
     } finally {
       setLoading(null)
     }
@@ -103,7 +90,7 @@ export default function SubscriptionPage() {
             <Link href="/dashboard">
               <Button variant="ghost">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Voltar ao Dashboard
+               Back to Dashboard
               </Button>
             </Link>
           </div>
@@ -112,10 +99,9 @@ export default function SubscriptionPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Escolha seu Plano de Assinatura</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Choose your Subscription Plan</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Selecione o plano que melhor atende às suas necessidades de estudo. Todos os planos incluem acesso completo
-            à nossa plataforma.
+           Select the plan that best suits your study needs. All plans include full access to our platform.
           </p>
         </div>
 
@@ -123,7 +109,7 @@ export default function SubscriptionPage() {
           {plans.map((plan) => (
             <Card key={plan.id} className={`relative ${plan.popular ? "border-blue-500 shadow-lg scale-105" : ""}`}>
               {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">Mais Popular</Badge>
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">Most popular</Badge>
               )}
 
               <CardHeader className="text-center">
@@ -132,7 +118,7 @@ export default function SubscriptionPage() {
                   <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
                   <span className="text-gray-600">{plan.period}</span>
                 </CardDescription>
-                <div className="text-sm text-gray-600">Até {plan.maxExams} provas por mês</div>
+                <div className="text-sm text-gray-600">Up to {plan.maxExams} tests per month</div>
               </CardHeader>
 
               <CardContent className="space-y-6">
@@ -151,7 +137,7 @@ export default function SubscriptionPage() {
                   onClick={() => handleSubscribe(plan.id)}
                   disabled={loading === plan.id}
                 >
-                  {loading === plan.id ? "Processando..." : "Assinar Agora"}
+                  {loading === plan.id ? "Processing..." : "Subscribe Now"}
                 </Button>
               </CardContent>
             </Card>
@@ -160,34 +146,30 @@ export default function SubscriptionPage() {
 
         {/* FAQ Section */}
         <div className="mt-16 max-w-4xl mx-auto">
-          <h3 className="text-2xl font-bold text-center mb-8">Perguntas Frequentes</h3>
+          <h3 className="text-2xl font-bold text-center mb-8">Faq</h3>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h4 className="font-semibold mb-2">Posso cancelar a qualquer momento?</h4>
+              <h4 className="font-semibold mb-2">Can I cancel at any time?</h4>
               <p className="text-gray-600 text-sm">
-                Sim, você pode cancelar sua assinatura a qualquer momento. O cancelamento será efetivo no final do
-                período de cobrança atual.
+                Yes, you can cancel your subscription at any time. Cancellation will be effective at the end of the current billing period.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">O que acontece se eu exceder o limite?</h4>
+              <h4 className="font-semibold mb-2">Can I change my plan?</h4>
               <p className="text-gray-600 text-sm">
-                Se você atingir o limite de provas do seu plano, precisará aguardar o próximo mês ou fazer upgrade para
-                um plano superior.
+                Yes, you can upgrade or downgrade your plan at any time. The changes will apply in the next billing cycle.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Posso mudar de plano?</h4>
+              <h4 className="font-semibold mb-2">What happens if I exceed the limit?</h4>
               <p className="text-gray-600 text-sm">
-                Sim, você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças serão aplicadas
-                no próximo ciclo de cobrança.
+                If you reach your plan's proof limit, you'll need to wait until the next month or upgrade to a higher plan.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">Os pagamentos são seguros?</h4>
+              <h4 className="font-semibold mb-2">Are payments secure?</h4>
               <p className="text-gray-600 text-sm">
-                Sim, utilizamos o Stripe para processar pagamentos, garantindo máxima segurança para suas informações
-                financeiras.
+                Yes, we use Stripe to process payments, ensuring maximum security for your financial information.
               </p>
             </div>
           </div>

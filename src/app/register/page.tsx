@@ -28,7 +28,7 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (formData.password !== formData.confirmPassword) {
-      toast( "As senhas não coincidem")
+      toast( "The passwords do not match. Please try again.")
       return
     }
 
@@ -52,13 +52,13 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast( "Conta criada com sucesso. Faça login para continuar.")
+        toast( "Account created successfully. Please log in to continue.")
         router.push("/login")
       } else {
-        toast( data.error || "Erro ao criar conta")
+        toast( data.error || "Error creating account. Please try again.")
       }
     } catch (error) {
-      toast("Erro de conexão. Tente novamente.")
+      toast("Connection error. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -79,13 +79,13 @@ export default function RegisterPage() {
             <BookOpen className="h-8 w-8 text-blue-600 mr-2" />
             <h1 className="text-2xl font-bold">ProvaOnline</h1>
           </div>
-          <CardTitle>Criar Conta</CardTitle>
-          <CardDescription>Preencha os dados abaixo para criar sua conta</CardDescription>
+          <CardTitle>Create Account</CardTitle>
+          <CardDescription>Fill in the details below to create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Nome Completo</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 name="name"
@@ -93,7 +93,7 @@ export default function RegisterPage() {
                 required
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Seu nome completo"
+                placeholder="Your full name"
               />
             </div>
 
@@ -106,12 +106,12 @@ export default function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="seu@email.com"
+                placeholder="your@email.com"
               />
             </div>
 
             <div>
-              <Label htmlFor="username">Nome de Usuário</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 name="username"
@@ -119,12 +119,12 @@ export default function RegisterPage() {
                 required
                 value={formData.username}
                 onChange={handleChange}
-                placeholder="usuario123"
+                placeholder="user1234"
               />
             </div>
 
             <div>
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">Telephone</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -136,7 +136,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -144,12 +144,12 @@ export default function RegisterPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Sua senha"
+                placeholder="your senha"
               />
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -157,20 +157,20 @@ export default function RegisterPage() {
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                placeholder="Confirme sua senha"
+                placeholder="Confirm your Password"
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Criando conta..." : "Criar Conta"}
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Já tem uma conta?{" "}
+             Already have an account?{" "}
               <Link href="/login" className="text-blue-600 hover:underline ">
-                Faça login
+                Login here
               </Link>
             </p>
           </div>

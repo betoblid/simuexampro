@@ -72,11 +72,11 @@ export function ExamClient({ params }: PageProps) {
         setTimeLeft(7200)
       } else {
         const error = await response.json()
-        toast( error.error || "Erro ao carregar prova")
+        toast.error( error.error || "Error loading the test")
         router.push("/dashboard")
       }
     } catch (error) {
-      toast( "Erro de conexão")
+      toast.error( "Connection error")
       router.push("/dashboard")
     } finally {
       setLoading(false)
@@ -122,10 +122,10 @@ export function ExamClient({ params }: PageProps) {
         )
       } else {
         const error = await response.json()
-        toast( error.error || "Erro ao enviar prova")
+        toast.error( error.error || "Error sending the proof")
       }
     } catch (error) {
-      toast("Erro de conexão")
+      toast.error("Connection error")
     } finally {
       setSubmitting(false)
     }
@@ -152,7 +152,7 @@ export function ExamClient({ params }: PageProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Carregando prova...</p>
+          <p className="text-gray-600">Loading proof...</p>
         </div>
       </div>
     )
@@ -163,11 +163,11 @@ export function ExamClient({ params }: PageProps) {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Prova não encontrada</CardTitle>
+            <CardTitle>Proof not found</CardTitle>
           </CardHeader>
           <CardContent>
             <Link href="/dashboard">
-              <Button>Voltar ao Dashboard</Button>
+              <Button>Back to Dashboard</Button>
             </Link>
           </CardContent>
         </Card>
@@ -190,26 +190,26 @@ export function ExamClient({ params }: PageProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-2xl font-bold text-blue-600">{examData.total_questions}</p>
-                <p className="text-sm text-gray-600">Questões</p>
+                <p className="text-sm text-gray-600">Questions</p>
               </div>
               <div className="p-4 bg-green-50 rounded-lg">
                 <p className="text-2xl font-bold text-green-600">2:00:00</p>
-                <p className="text-sm text-gray-600">Tempo Limite</p>
+                <p className="text-sm text-gray-600">Time Limit</p>
               </div>
               <div className="p-4 bg-purple-50 rounded-lg">
-                <p className="text-2xl font-bold text-purple-600">Múltipla</p>
-                <p className="text-sm text-gray-600">Escolha</p>
+                <p className="text-2xl font-bold text-purple-600">Multiple</p>
+                <p className="text-sm text-gray-600">Choice</p>
               </div>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-medium text-yellow-800 mb-2">Instruções:</h4>
+              <h4 className="font-medium text-yellow-800 mb-2">Instructions:</h4>
               <ul className="text-sm text-yellow-700 space-y-1">
-                <li>• Você tem 2 horas para completar a prova</li>
-                <li>• Cada questão tem apenas uma resposta correta</li>
-                <li>• Você pode navegar entre as questões livremente</li>
-                <li>• A prova será enviada automaticamente quando o tempo acabar</li>
-                <li>• Certifique-se de ter uma conexão estável com a internet</li>
+                <li>• You have 2 hours to complete the test</li>
+                <li>• Each question has only one correct answer</li>
+                <li>• You can navigate freely between the questions</li>
+                <li>• The test will be submitted automatically when time is up</li>
+                <li>• Make sure you have a stable internet connection</li>
               </ul>
             </div>
 
@@ -217,11 +217,11 @@ export function ExamClient({ params }: PageProps) {
               <Link href="/dashboard">
                 <Button variant="outline" className="flex-1 bg-transparent">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar
+                  Go back to Dashboard
                 </Button>
               </Link>
               <Button onClick={() => setExamStarted(true)} className="flex-1">
-                Iniciar Prova
+                Start Test
               </Button>
             </div>
           </CardContent>
@@ -248,10 +248,10 @@ export function ExamClient({ params }: PageProps) {
                 <span className={timeLeft < 600 ? "text-red-600 font-medium" : ""}>{formatTime(timeLeft)}</span>
               </div>
               <div className="text-sm text-gray-600">
-                Questão {currentQuestion + 1} de {examData.questions.length}
+                Question {currentQuestion + 1} de {examData.questions.length}
               </div>
               <div className="text-sm text-gray-600">
-                Respondidas: {getAnsweredCount()}/{examData.questions.length}
+                Answered: {getAnsweredCount()}/{examData.questions.length}
               </div>
             </div>
           </div>
@@ -265,7 +265,7 @@ export function ExamClient({ params }: PageProps) {
           <div className="lg:col-span-1">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Navegação</CardTitle>
+                <CardTitle className="text-lg">Navigation</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-5 gap-2">
@@ -296,7 +296,7 @@ export function ExamClient({ params }: PageProps) {
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">Questão {currentQ.number}</CardTitle>
+                <CardTitle className="text-xl">Question {currentQ.number}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="text-lg leading-relaxed">{currentQ.question}</div>
@@ -316,7 +316,7 @@ export function ExamClient({ params }: PageProps) {
                 <div className="flex justify-between pt-6">
                   <Button variant="outline" onClick={handlePrevious} disabled={currentQuestion === 0}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Anterior
+                    Previous
                   </Button>
 
                   <div className="flex space-x-4">
@@ -326,7 +326,7 @@ export function ExamClient({ params }: PageProps) {
                       </Button>
                     ) : (
                       <Button onClick={handleNext} disabled={currentQuestion === examData.questions.length - 1}>
-                        Próxima
+                        Next
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     )}
