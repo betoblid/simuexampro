@@ -32,26 +32,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const exam = examResult.rows[0]
     const questions = exam.questions
 
-    // Calculate score
+    // Calculate score and create detailed results
     let score = 0
-    const results = []
+    const detailedResults = []
 
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i]
-      const userAnswer = answers[i]
+      const userAnswer = answers[i] || null
       const isCorrect = userAnswer === question.answer
 
       if (isCorrect) {
         score++
       }
 
-      results.push({
+      detailedResults.push({
         questionNumber: question.number,
         question: question.question,
+        options: question.options,
         userAnswer,
         correctAnswer: question.answer,
         isCorrect,
-        options: question.options,
       })
     }
 
@@ -65,11 +65,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     try {
       // Insert exam attempt
-      await pool.query(
+      const attemptResult = await pool.query(
         `INSERT INTO exam_attempts (user_id, exam_id, answers, score, total_questions, percentage, month_year)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id`,
         [decoded.userId, examId, JSON.stringify(answers), score, exam.total_questions, percentage, monthYear],
       )
+
+      const attemptId = attemptResult.rows[0].id
 
       // Update monthly usage
       await pool.query(
@@ -83,10 +86,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await pool.query("COMMIT")
 
       return NextResponse.json({
+        attemptId,
         score,
         totalQuestions: exam.total_questions,
         percentage: Number.parseFloat(percentage.toFixed(2)),
-        results,
+        examTitle: exam.title,
+        detailedResults,
       })
     } catch (error) {
       await pool.query("ROLLBACK")

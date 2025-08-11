@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -31,7 +31,7 @@ interface ExamData {
   total_questions: number
 }
 
-export default function ExamPage() {
+export default function ExamPage({ params }: { params: { id: string } }) {
   const [examData, setExamData] = useState<ExamData | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<string[]>([])
@@ -40,7 +40,6 @@ export default function ExamPage() {
   const [submitting, setSubmitting] = useState(false)
   const [examStarted, setExamStarted] = useState(false)
   const router = useRouter()
-  const params = useParams()
 
   useEffect(() => {
     fetchExamData()
@@ -66,11 +65,11 @@ export default function ExamPage() {
         setTimeLeft(7200)
       } else {
         const error = await response.json()
-        toast( error.error || "Erro ao carregar prova")
+        toast.error( error.error || "Erro ao carregar prova")
         router.push("/dashboard")
       }
     } catch (error) {
-      toast( "Erro de conexão")
+      toast.error("Erro de conexão")
       router.push("/dashboard")
     } finally {
       setLoading(false)
@@ -111,15 +110,17 @@ export default function ExamPage() {
 
       if (response.ok) {
         const result = await response.json()
-        router.push(
-          `/exam/${params.id}/result?score=${result.score}&total=${result.totalQuestions}&percentage=${result.percentage}`,
-        )
+
+        // Create URL with all necessary data for both result and review pages
+        const resultUrl = `/exam/${params.id}/result?score=${result.score}&total=${result.totalQuestions}&percentage=${result.percentage}&title=${encodeURIComponent(result.examTitle)}&results=${encodeURIComponent(JSON.stringify(result.detailedResults))}`
+
+        router.push(resultUrl)
       } else {
         const error = await response.json()
-        toast(error.error || "Erro ao enviar prova")
+        toast.error( error.error || "Erro ao enviar prova")
       }
     } catch (error) {
-      toast( "Erro de conexão")
+      toast.error( "Erro de conexão")
     } finally {
       setSubmitting(false)
     }

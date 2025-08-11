@@ -1,18 +1,19 @@
 "use client"
 
-import { useParams, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Trophy, CheckCircle, XCircle, Home, RotateCcw } from "lucide-react"
+import { Trophy, CheckCircle, XCircle, Home, RotateCcw, Eye } from "lucide-react"
 
-export default function ExamResultPage() {
+export default function ExamResultPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams()
   const score = Number.parseInt(searchParams.get("score") || "0")
   const total = Number.parseInt(searchParams.get("total") || "0")
   const percentage = Number.parseFloat(searchParams.get("percentage") || "0")
-  const params = useParams()
+  const examTitle = searchParams.get("title") || "Prova"
+  const detailedResults = searchParams.get("results") || ""
 
   const getPerformanceColor = () => {
     if (percentage >= 80) return "text-green-600"
@@ -31,6 +32,9 @@ export default function ExamResultPage() {
     if (percentage >= 60) return "bg-yellow-100 border-yellow-300"
     return "bg-red-100 border-red-300"
   }
+
+  // Create review URL with all necessary data
+  const reviewUrl = `/exam/${params.id}/review?score=${score}&total=${total}&percentage=${percentage}&title=${encodeURIComponent(examTitle)}&results=${encodeURIComponent(detailedResults)}`
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -99,14 +103,22 @@ export default function ExamResultPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-4">
-            <Link href="/dashboard" className="flex-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Link href="/dashboard">
               <Button variant="outline" className="w-full bg-transparent">
                 <Home className="h-4 w-4 mr-2" />
                 Dashboard
               </Button>
             </Link>
-            <Link href={`/exam/${params.id}`} className="flex-1">
+
+            <Link href={reviewUrl}>
+              <Button variant="outline" className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+                <Eye className="h-4 w-4 mr-2" />
+                Revisar Respostas
+              </Button>
+            </Link>
+
+            <Link href={`/exam/${params.id}`}>
               <Button className="w-full">
                 <RotateCcw className="h-4 w-4 mr-2" />
                 Tentar Novamente

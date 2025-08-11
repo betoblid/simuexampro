@@ -124,7 +124,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 
   console.log(`Payment succeeded for invoice ${invoice.object}`)
-  console.log(`Payment succeeded for invoice ${invoice.object}`)
  if ('subscription' in invoice && invoice.subscription) {
   await pool.query(
     `UPDATE user_subscriptions
