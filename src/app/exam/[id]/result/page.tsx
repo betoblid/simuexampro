@@ -9,12 +9,12 @@ import { Trophy, CheckCircle, XCircle, Home, RotateCcw, Eye } from "lucide-react
 
 export default function ExamResultPage() {
   const searchParams = useSearchParams()
+  const params = useParams()
+  const attemptId = searchParams.get("attemptId")
   const score = Number.parseInt(searchParams.get("score") || "0")
   const total = Number.parseInt(searchParams.get("total") || "0")
   const percentage = Number.parseFloat(searchParams.get("percentage") || "0")
   const examTitle = searchParams.get("title") || "Prova"
-  const detailedResults = searchParams.get("results") || ""
-    const params = useParams()
 
   const getPerformanceColor = () => {
     if (percentage >= 80) return "text-green-600"
@@ -23,9 +23,9 @@ export default function ExamResultPage() {
   }
 
   const getPerformanceMessage = () => {
-    if (percentage >= 80) return "Excellent performance!"
-    if (percentage >= 60) return "Good performance!"
-    return "Keep studying!"
+    if (percentage >= 80) return "Excelente desempenho!"
+    if (percentage >= 60) return "Bom desempenho!"
+    return "Continue estudando!"
   }
 
   const getGradeColor = () => {
@@ -33,9 +33,6 @@ export default function ExamResultPage() {
     if (percentage >= 60) return "bg-yellow-100 border-yellow-300"
     return "bg-red-100 border-red-300"
   }
-
-  // Create review URL with all necessary data
-  const reviewUrl = `/exam/${params.id}/review?score=${score}&total=${total}&percentage=${percentage}&title=${encodeURIComponent(examTitle)}&results=${encodeURIComponent(detailedResults)}`
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -46,8 +43,8 @@ export default function ExamResultPage() {
               <Trophy className={`h-12 w-12 ${getPerformanceColor()}`} />
             </div>
           </div>
-          <CardTitle className="text-2xl">Test Results</CardTitle>
-          <CardDescription>Check out your performance in the test</CardDescription>
+          <CardTitle className="text-2xl">Resultado da Prova</CardTitle>
+          <CardDescription>Confira seu desempenho na prova realizada</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -60,9 +57,9 @@ export default function ExamResultPage() {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-gray-600">
-              <span>Progress</span>
+              <span>Progresso</span>
               <span>
-                {score} of {total} correct questions
+                {score} de {total} questões corretas
               </span>
             </div>
             <Progress value={percentage} className="h-3" />
@@ -75,7 +72,7 @@ export default function ExamResultPage() {
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
               <p className="text-2xl font-bold text-green-600">{score}</p>
-              <p className="text-sm text-gray-600">Hits</p>
+              <p className="text-sm text-gray-600">Acertos</p>
             </div>
 
             <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
@@ -83,23 +80,23 @@ export default function ExamResultPage() {
                 <XCircle className="h-6 w-6 text-red-600" />
               </div>
               <p className="text-2xl font-bold text-red-600">{total - score}</p>
-              <p className="text-sm text-gray-600">Errors</p>
+              <p className="text-sm text-gray-600">Erros</p>
             </div>
           </div>
 
           {/* Performance Analysis */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">Performance Analysis</h4>
+            <h4 className="font-medium text-blue-800 mb-2">Análise de Desempenho</h4>
             <div className="text-sm text-blue-700 space-y-1">
-              {percentage >= 80 && <p>• Congratulations! You demonstrated excellent knowledge in the area..</p>}
+              {percentage >= 80 && <p>• Parabéns! Você demonstrou excelente conhecimento na área.</p>}
               {percentage >= 60 && percentage < 80 && (
-                <p>• Good job! Keep studying to improve even more.</p>
+                <p>• Bom trabalho! Continue estudando para melhorar ainda mais.</p>
               )}
-              {percentage < 60 && <p>• We recommend reviewing the content and doing more exercises.</p>}
+              {percentage < 60 && <p>• Recomendamos revisar o conteúdo e fazer mais exercícios.</p>}
               <p>
-                • Your score was {score} hits in {total} issues.
+                • Sua pontuação foi de {score} acertos em {total} questões.
               </p>
-              <p>• Keep practicing to improve your knowledge.</p>
+              <p>• Continue praticando para aprimorar seus conhecimentos.</p>
             </div>
           </div>
 
@@ -112,24 +109,26 @@ export default function ExamResultPage() {
               </Button>
             </Link>
 
-            <Link href={reviewUrl}>
-              <Button variant="outline" className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
-                <Eye className="h-4 w-4 mr-2" />
-               Review Answers
-              </Button>
-            </Link>
+            {attemptId && (
+              <Link href={`/exam-attempt/${attemptId}/review`}>
+                <Button variant="outline" className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Revisar Respostas
+                </Button>
+              </Link>
+            )}
 
             <Link href={`/exam/${params.id}`}>
               <Button className="w-full">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Try Again
+                Tentar Novamente
               </Button>
             </Link>
           </div>
 
           {/* Share Results */}
           <div className="text-center pt-4 border-t">
-            <p className="text-sm text-gray-600 mb-2">Share your result</p>
+            <p className="text-sm text-gray-600 mb-2">Compartilhe seu resultado</p>
             <div className="flex justify-center space-x-2">
               <Button
                 variant="outline"
@@ -139,7 +138,7 @@ export default function ExamResultPage() {
                   navigator.clipboard.writeText(text)
                 }}
               >
-                Copy Result
+                Copiar Resultado
               </Button>
             </div>
           </div>

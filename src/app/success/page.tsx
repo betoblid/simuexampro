@@ -32,6 +32,7 @@ export default function SuccessPage() {
       const response = await fetch("/api/protected/user")
       if (response.ok) {
         const data = await response.json()
+        console.log("User data:", data)
         setSubscriptionData(data.subscription)
       }
     } catch (error) {

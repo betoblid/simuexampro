@@ -74,6 +74,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
       const attemptId = attemptResult.rows[0].id
 
+      // Insert detailed results
+      await pool.query(
+        `INSERT INTO exam_attempt_details (attempt_id, detailed_results)
+         VALUES ($1, $2)`,
+        [attemptId, JSON.stringify(detailedResults)],
+      )
+
       // Update monthly usage
       await pool.query(
         `INSERT INTO monthly_exam_usage (user_id, month_year, exams_taken)
@@ -91,7 +98,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         totalQuestions: exam.total_questions,
         percentage: Number.parseFloat(percentage.toFixed(2)),
         examTitle: exam.title,
-        detailedResults,
       })
     } catch (error) {
       await pool.query("ROLLBACK")

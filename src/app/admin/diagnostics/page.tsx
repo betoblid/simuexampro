@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, Database, CreditCard, RefreshCw } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { CheckCircle, XCircle, Database, CreditCard, RefreshCw, Search } from "lucide-react"
 
 interface DiagnosticResult {
   status: string
@@ -16,9 +18,22 @@ interface DiagnosticResult {
   details?: string
 }
 
+interface WebhookDebugResult {
+  status: string
+  webhookSecret: string
+  environmentVariables: Record<string, boolean>
+  recentSubscriptions: any[]
+  timestamp: string
+}
+
 export default function DiagnosticsPage() {
   const [dbStatus, setDbStatus] = useState<DiagnosticResult | null>(null)
+  const [webhookStatus, setWebhookStatus] = useState<WebhookDebugResult | null>(null)
+  const [userSubscription, setUserSubscription] = useState<any>(null)
+  const [userId, setUserId] = useState("")
   const [loading, setLoading] = useState(false)
+  const [webhookLoading, setWebhookLoading] = useState(false)
+  const [userLoading, setUserLoading] = useState(false)
 
   const testDatabase = async () => {
     setLoading(true)
@@ -37,8 +52,45 @@ export default function DiagnosticsPage() {
     }
   }
 
+  const testWebhook = async () => {
+    setWebhookLoading(true)
+    try {
+      const response = await fetch("/api/debug/stripe-webhook")
+      const data = await response.json()
+      setWebhookStatus(data)
+    } catch (error) {
+      setWebhookStatus({
+        status: "error",
+        webhookSecret: "Error",
+        environmentVariables: {},
+        recentSubscriptions: [],
+        timestamp: new Date().toISOString(),
+      })
+    } finally {
+      setWebhookLoading(false)
+    }
+  }
+
+  const checkUserSubscription = async () => {
+    if (!userId) return
+
+    setUserLoading(true)
+    try {
+      const response = await fetch(`/api/debug/user-subscription/${userId}`)
+      const data = await response.json()
+      setUserSubscription(data)
+    } catch (error) {
+      setUserSubscription({
+        error: error instanceof Error ? error.message : "Unknown error",
+      })
+    } finally {
+      setUserLoading(false)
+    }
+  }
+
   useEffect(() => {
     testDatabase()
+    testWebhook()
   }, [])
 
   const getStatusIcon = (status: string) => {
@@ -51,15 +103,13 @@ export default function DiagnosticsPage() {
 
   const getStatusBadge = (status: string) => {
     return (
-      <Badge variant={status === "success" ? "default" : "destructive"}>
-        {status === "success" ? "Conectado" : "Erro"}
-      </Badge>
+      <Badge variant={status === "success" ? "default" : "destructive"}>{status === "success" ? "OK" : "Erro"}</Badge>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Diagnóstico do Sistema</h1>
           <p className="text-gray-600">Verifique o status das conexões e configurações</p>
@@ -110,26 +160,11 @@ export default function DiagnosticsPage() {
                     </div>
                   )}
 
-                  {dbStatus.status === "success" && dbStatus.plansCount && (
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        Planos de assinatura cadastrados: <strong>{dbStatus.plansCount}</strong>
-                      </p>
-                    </div>
-                  )}
-
                   {dbStatus.error && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                       <h4 className="font-medium text-red-800 mb-1">Erro:</h4>
                       <p className="text-sm text-red-700">{dbStatus.error}</p>
-                      {dbStatus.details && <p className="text-xs text-red-600 mt-2">{dbStatus.details}</p>}
                     </div>
-                  )}
-
-                  {dbStatus.timestamp && (
-                    <p className="text-xs text-gray-500">
-                      Último teste: {new Date(dbStatus.timestamp).toLocaleString("pt-BR")}
-                    </p>
                   )}
                 </div>
               ) : (
@@ -138,44 +173,161 @@ export default function DiagnosticsPage() {
             </CardContent>
           </Card>
 
-          {/* Environment Variables */}
+          {/* Stripe Webhook Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <CreditCard className="h-6 w-6 mr-2" />
+                  Status do Webhook Stripe
+                </div>
+                <div className="flex items-center space-x-2">
+                  {webhookStatus && getStatusBadge(webhookStatus.status)}
+                  <Button variant="outline" size="sm" onClick={testWebhook} disabled={webhookLoading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${webhookLoading ? "animate-spin" : ""}`} />
+                    Verificar
+                  </Button>
+                </div>
+              </CardTitle>
+              <CardDescription>Status das configurações do Stripe e assinaturas recentes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {webhookLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                  <span className="ml-2">Verificando webhook...</span>
+                </div>
+              ) : webhookStatus ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Configurações:</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Webhook Secret</span>
+                          <Badge variant={webhookStatus.webhookSecret === "Configured" ? "default" : "destructive"}>
+                            {webhookStatus.webhookSecret}
+                          </Badge>
+                        </div>
+                        {Object.entries(webhookStatus.environmentVariables).map(([key, value]) => (
+                          <div key={key} className="flex items-center justify-between">
+                            <span className="text-sm font-mono">{key}</span>
+                            <Badge variant={value ? "default" : "destructive"}>{value ? "OK" : "Missing"}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium mb-2">Assinaturas Recentes:</h4>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {webhookStatus.recentSubscriptions.length > 0 ? (
+                          webhookStatus.recentSubscriptions.map((sub, index) => (
+                            <div key={index} className="text-sm p-2 bg-gray-50 rounded">
+                              <div className="flex justify-between">
+                                <span>User: {sub.user_email}</span>
+                                <Badge variant={sub.status === "active" ? "default" : "secondary"}>{sub.status}</Badge>
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {sub.plan_name} - {new Date(sub.created_at).toLocaleDateString("pt-BR")}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">Nenhuma assinatura encontrada</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500">Clique em "Verificar" para testar o webhook</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* User Subscription Checker */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <CreditCard className="h-6 w-6 mr-2" />
-                Variáveis de Ambiente
+                <Search className="h-6 w-6 mr-2" />
+                Verificar Assinatura do Usuário
               </CardTitle>
-              <CardDescription>Status das configurações necessárias</CardDescription>
+              <CardDescription>Digite o ID do usuário para verificar o status da assinatura</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {[
-                  { name: "DATABASE_URL", value: process.env.DATABASE_URL },
-                  { name: "STRIPE_SECRET_KEY", value: process.env.STRIPE_SECRET_KEY },
-                  { name: "STRIPE_PRICE_ID_JUNIOR", value: process.env.STRIPE_PRICE_ID_JUNIOR },
-                  { name: "STRIPE_PRICE_ID_PLENO", value: process.env.STRIPE_PRICE_ID_PLENO },
-                  { name: "STRIPE_PRICE_ID_SENIOR", value: process.env.STRIPE_PRICE_ID_SENIOR },
-                  { name: "JWT_SECRET", value: process.env.JWT_SECRET },
-                  { name: "NEXT_PUBLIC_BASE_URL", value: process.env.NEXT_PUBLIC_BASE_URL },
-                ].map((env) => (
-                  <div key={env.name} className="flex items-center justify-between">
-                    <span className="font-mono text-sm">{env.name}</span>
-                    <div className="flex items-center">
-                      {env.value ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                          <Badge variant="outline">Configurado</Badge>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-4 w-4 text-red-500 mr-2" />
-                          <Badge variant="destructive">Não configurado</Badge>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="flex space-x-4 mb-4">
+                <div className="flex-1">
+                  <Label htmlFor="userId">ID do Usuário</Label>
+                  <Input
+                    id="userId"
+                    type="number"
+                    placeholder="Digite o ID do usuário"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={checkUserSubscription} disabled={userLoading || !userId}>
+                    {userLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
+
+              {userSubscription && (
+                <div className="space-y-4">
+                  {userSubscription.error ? (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <p className="text-red-700">{userSubscription.error}</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium mb-2">Dados do Usuário:</h4>
+                        <div className="bg-gray-50 p-3 rounded text-sm">
+                          <p>
+                            <strong>ID:</strong> {userSubscription.user.id}
+                          </p>
+                          <p>
+                            <strong>Email:</strong> {userSubscription.user.email}
+                          </p>
+                          <p>
+                            <strong>Nome:</strong> {userSubscription.user.name}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium mb-2">Assinatura no Banco:</h4>
+                        {userSubscription.database_subscription ? (
+                          <div className="bg-gray-50 p-3 rounded text-sm">
+                            <p>
+                              <strong>Status:</strong>
+                              <Badge
+                                className="ml-2"
+                                variant={
+                                  userSubscription.database_subscription.status === "active" ? "default" : "secondary"
+                                }
+                              >
+                                {userSubscription.database_subscription.status}
+                              </Badge>
+                            </p>
+                            <p>
+                              <strong>Plano:</strong> {userSubscription.database_subscription.plan_name}
+                            </p>
+                            <p>
+                              <strong>Stripe ID:</strong>{" "}
+                              {userSubscription.database_subscription.stripe_subscription_id}
+                            </p>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 text-sm">Nenhuma assinatura encontrada</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -198,13 +350,13 @@ export default function DiagnosticsPage() {
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="/api/test-db" target="_blank" rel="noreferrer">
-                    API de Teste do Banco
+                  <a href="https://dashboard.stripe.com/webhooks" target="_blank" rel="noopener noreferrer">
+                    Webhooks do Stripe
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer">
-                    Dashboard do Stripe
+                  <a href="https://dashboard.stripe.com/subscriptions" target="_blank" rel="noopener noreferrer">
+                    Assinaturas do Stripe
                   </a>
                 </Button>
               </div>

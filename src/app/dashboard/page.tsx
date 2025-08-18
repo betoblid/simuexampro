@@ -56,6 +56,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/protected/user")
       if (response.ok) {
         const data = await response.json()
+        console.log(data)
         setUserData(data)
       } else {
         router.push("/login")
@@ -276,7 +277,8 @@ export default function DashboardPage() {
                 {userData?.recentAttempts && userData.recentAttempts.length > 0 ? (
                   <div className="space-y-4">
                     {userData.recentAttempts.map((attempt) => (
-                      <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <Link href={`${process.env.NEXT_PUBLIC_BASE_URL}/exam-attempt/${attempt.id}/review`} key={attempt.id}>
+                        <div key={attempt.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div>
                           <h4 className="font-medium">{attempt.exam_title}</h4>
                           <p className="text-sm text-gray-600">
@@ -290,6 +292,7 @@ export default function DashboardPage() {
                           <p className="text-sm text-gray-600">{attempt.percentage}%</p>
                         </div>
                       </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (

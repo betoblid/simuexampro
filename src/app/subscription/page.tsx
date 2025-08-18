@@ -64,6 +64,7 @@ export default function SubscriptionPage() {
 
       const data = await response.json()
 
+      console.log("Checkout session response:", data)
       if (response.ok) {
         // Redirect to Stripe Checkout
         window.location.href = data.url
