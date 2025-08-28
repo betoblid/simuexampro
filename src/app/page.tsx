@@ -11,14 +11,14 @@ export default function HomePage() {
       price: "$ 200",
       period: "/month",
       maxExams: 3,
-      features: ["Up to 3 monthly tests", "Historical results", "Basic Support"],
+      features: ["Up to 10 monthly tests", "Historical results", "Basic Support"],
     },
     {
       name: "Full ",
       price: "$ 350",
       period: "/month",
       maxExams: 5,
-      features: ["Up to 5 monthly tests", "Detailed history", "Priority Support", "Basic Support"],
+      features: ["Up to 18 monthly tests", "Detailed history", "Priority Support", "Basic Support"],
       popular: true,
     },
     {
@@ -26,7 +26,7 @@ export default function HomePage() {
       price: "US$ 500",
       period: "/month",
       maxExams: 10,
-      features: ["Up to 10 monthly tests", "Detailed history", "Premium Support", "Exclusive simulations"],
+      features: ["Up to 25 monthly tests", "Detailed history", "Premium Support", "Exclusive simulations"],
     },
   ]
 
