@@ -28,7 +28,7 @@ export default function SubscriptionPage() {
       name: "Junior",
       price: "$ 200",
       period: "/month",
-      maxExams: 3,
+      maxExams: 10,
        features: ["Up to 10 monthly tests", "Historical results", "Basic Support"],
     },
     {
@@ -36,7 +36,7 @@ export default function SubscriptionPage() {
       name: "Full",
        price: "$ 350",
       period: "/month",
-      maxExams: 5,
+      maxExams: 18,
       features: ["Up to 18 monthly tests", "Detailed history", "Priority Support", "Basic Support"],
       popular: true,
     },
@@ -45,7 +45,7 @@ export default function SubscriptionPage() {
       name: "Senior",
        price: "$ 500",
       period: "/month",
-      maxExams: 10,
+      maxExams: 25,
       features: ["Up to 25 monthly tests", "Detailed history", "Premium Support", "Exclusive simulations"],
     },
   ]
