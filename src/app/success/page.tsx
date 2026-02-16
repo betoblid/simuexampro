@@ -18,14 +18,43 @@ export default function SuccessPage() {
     const sessionId = searchParams.get("session_id")
 
     if (success === "true") {
-      // Aguarda um pouco para o webhook processar
-      setTimeout(() => {
-        fetchUserData()
-      }, 3000)
+      if (!sessionId) {
+        setLoading(false)
+        return
+      }
+      confirmAndLoad(sessionId)
     } else {
       router.push("/dashboard")
     }
   }, [searchParams, router])
+
+  const confirmAndLoad = async (sessionId: string) => {
+    try {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const confirmResponse = await fetch("/api/protected/confirm-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        })
+
+        if (confirmResponse.ok) {
+          break
+        }
+
+        const errorText = await confirmResponse.text()
+        console.error(`Error confirming checkout session (attempt ${attempt + 1}):`, errorText)
+
+        // Stripe can mark the payment as paid a few seconds after redirect.
+        if (attempt < 4) {
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+        }
+      }
+    } catch (error) {
+      console.error("Error confirming checkout session:", error)
+    } finally {
+      fetchUserData()
+    }
+  }
 
   const fetchUserData = async () => {
     try {

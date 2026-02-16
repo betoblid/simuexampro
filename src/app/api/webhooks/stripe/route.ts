@@ -1,243 +1,341 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
-import { pool } from "@/lib/db"
-import type Stripe from "stripe"
+import { type NextRequest, NextResponse } from "next/server";
+import { pool } from "@/lib/db";
+import { stripe, SUBSCRIPTION_PLANS } from "@/lib/stripe";
+import type Stripe from "stripe";
+import type { PoolClient } from "pg";
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
+const ACCESS_DURATION_DAYS = 30;
 
-export async function POST(request: NextRequest) {
-  console.log("🔔 Webhook received")
+type PlanKey = keyof typeof SUBSCRIPTION_PLANS;
 
-  try {
-    const body = await request.text()
-    const signature = request.headers.get("stripe-signature")!
+const PLAN_NAME_CANDIDATES: Record<PlanKey, string[]> = {
+  junior: ["Júnior", "Junior", "JÃºnior"],
+  pleno: ["Pleno"],
+  senior: ["Sênior", "Senior", "SÃªnior"],
+};
 
-    console.log("📝 Webhook signature:", signature ? "Present" : "Missing")
+function getPlanKey(value: string | undefined | null): PlanKey | null {
+  if (value === "junior" || value === "pleno" || value === "senior") return value;
+  return null;
+}
 
-    let event: Stripe.Event
+function toPositiveInt(value: unknown): number | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
 
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-      console.log("✅ Webhook signature verified, event type:", event.type)
-    } catch (err) {
-      console.error("❌ Webhook signature verification failed:", err)
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
-    }
+function extractStripeId(
+  value:
+    | string
+    | Stripe.Customer
+    | Stripe.DeletedCustomer
+    | Stripe.PaymentIntent
+    | null
+    | undefined,
+): string | null {
+  if (typeof value === "string" && value) return value;
+  if (value && typeof value === "object" && "id" in value && typeof value.id === "string") return value.id;
+  return null;
+}
 
-    console.log("🎯 Processing event:", event.type, "ID:", event.id)
+function buildAccessPeriod(createdUnixSeconds?: number): { periodStart: Date; periodEnd: Date } {
+  const periodStart = createdUnixSeconds ? new Date(createdUnixSeconds * 1000) : new Date();
+  const periodEnd = new Date(periodStart.getTime() + ACCESS_DURATION_DAYS * 24 * 60 * 60 * 1000);
+  return { periodStart, periodEnd };
+}
 
-    switch (event.type) {
-      case "checkout.session.completed":
-        console.log("💳 Processing checkout.session.completed")
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
-        break
+async function ensureUserExists(client: PoolClient, userId: number): Promise<boolean> {
+  const result = await client.query("SELECT id FROM users WHERE id = $1", [userId]);
+  return result.rows.length > 0;
+}
 
-      case "invoice.payment_succeeded":
-        console.log("💰 Processing invoice.payment_succeeded")
-        await handlePaymentSucceeded(event.data.object as Stripe.Invoice)
-        break
+async function getPlanDbIdByPrice(client: PoolClient, priceId: string): Promise<number | null> {
+  const result = await client.query(
+    "SELECT id FROM subscription_plans WHERE stripe_price_id = $1 LIMIT 1",
+    [priceId],
+  );
+  if (result.rows.length === 0) return null;
+  return Number(result.rows[0].id);
+}
 
-      case "invoice.payment_failed":
-        console.log("❌ Processing invoice.payment_failed")
-        await handlePaymentFailed(event.data.object as Stripe.Invoice)
-        break
+async function getPlanDbIdByNames(client: PoolClient, planKey: PlanKey): Promise<number | null> {
+  const result = await client.query(
+    "SELECT id FROM subscription_plans WHERE name = ANY($1::text[]) ORDER BY id LIMIT 1",
+    [PLAN_NAME_CANDIDATES[planKey]],
+  );
+  if (result.rows.length === 0) return null;
+  return Number(result.rows[0].id);
+}
 
-      case "customer.subscription.updated":
-        console.log("🔄 Processing customer.subscription.updated")
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
-        break
-
-      case "customer.subscription.deleted":
-        console.log("🗑️ Processing customer.subscription.deleted")
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
-        break
-
-      default:
-        console.log(`ℹ️ Unhandled event type: ${event.type}`)
-    }
-
-    console.log("✅ Webhook processed successfully")
-    return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error("💥 Webhook error:", error)
-    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 })
+async function resolvePlanDbIdForCheckout(
+  client: PoolClient,
+  session: Stripe.Checkout.Session,
+): Promise<number | null> {
+  const planDbIdFromMetadata = toPositiveInt(session.metadata?.planDbId);
+  if (planDbIdFromMetadata) {
+    const exists = await client.query("SELECT id FROM subscription_plans WHERE id = $1 LIMIT 1", [
+      planDbIdFromMetadata,
+    ]);
+    if (exists.rows.length > 0) return planDbIdFromMetadata;
   }
+
+  const planKey = getPlanKey(session.metadata?.planId);
+  if (planKey) {
+    const byConfiguredPrice = await getPlanDbIdByPrice(client, SUBSCRIPTION_PLANS[planKey].priceId);
+    if (byConfiguredPrice) return byConfiguredPrice;
+  }
+
+  const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+    expand: ["line_items.data.price"],
+  });
+  const lineItemPriceId = fullSession.line_items?.data?.[0]?.price?.id;
+  if (lineItemPriceId) {
+    const byLineItemPrice = await getPlanDbIdByPrice(client, lineItemPriceId);
+    if (byLineItemPrice) return byLineItemPrice;
+  }
+
+  if (planKey) {
+    return getPlanDbIdByNames(client, planKey);
+  }
+
+  return null;
+}
+
+async function resolvePlanDbIdForPaymentIntent(
+  client: PoolClient,
+  paymentIntent: Stripe.PaymentIntent,
+): Promise<number | null> {
+  const planDbIdFromMetadata = toPositiveInt(paymentIntent.metadata?.planDbId);
+  if (planDbIdFromMetadata) {
+    const exists = await client.query("SELECT id FROM subscription_plans WHERE id = $1 LIMIT 1", [
+      planDbIdFromMetadata,
+    ]);
+    if (exists.rows.length > 0) return planDbIdFromMetadata;
+  }
+
+  const planKey = getPlanKey(paymentIntent.metadata?.planId);
+  if (!planKey) return null;
+
+  const byConfiguredPrice = await getPlanDbIdByPrice(client, SUBSCRIPTION_PLANS[planKey].priceId);
+  if (byConfiguredPrice) return byConfiguredPrice;
+
+  return getPlanDbIdByNames(client, planKey);
+}
+
+async function upsertUserSubscription(
+  client: PoolClient,
+  params: {
+    userId: number;
+    planDbId: number;
+    externalId: string;
+    stripeCustomerId: string | null;
+    status: string;
+    periodStart: Date;
+    periodEnd: Date;
+  },
+) {
+  await client.query(
+    `INSERT INTO user_subscriptions (
+       user_id,
+       plan_id,
+       stripe_subscription_id,
+       stripe_customer_id,
+       status,
+       current_period_start,
+       current_period_end,
+       created_at,
+       updated_at
+     )
+     VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+     ON CONFLICT (stripe_subscription_id) DO UPDATE
+       SET user_id = EXCLUDED.user_id,
+           plan_id = EXCLUDED.plan_id,
+           stripe_customer_id = EXCLUDED.stripe_customer_id,
+           status = EXCLUDED.status,
+           current_period_start = EXCLUDED.current_period_start,
+           current_period_end = EXCLUDED.current_period_end,
+           updated_at = CURRENT_TIMESTAMP`,
+    [
+      params.userId,
+      params.planDbId,
+      params.externalId,
+      params.stripeCustomerId,
+      params.status,
+      params.periodStart,
+      params.periodEnd,
+    ],
+  );
+}
+
+async function cancelCurrentActivePlans(client: PoolClient, userId: number) {
+  await client.query(
+    `UPDATE user_subscriptions
+       SET status = 'canceled', updated_at = CURRENT_TIMESTAMP
+     WHERE user_id = $1
+       AND status IN ('active', 'trialing')`,
+    [userId],
+  );
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  console.log("🛒 Handling checkout completion for session:", session.id)
+  const stripeCustomerId = extractStripeId(session.customer);
+  let userId = toPositiveInt(session.metadata?.userId) ?? toPositiveInt(session.client_reference_id);
 
-  const userId = Number.parseInt(session.metadata?.userId || "0")
-  const planId = session.metadata?.planId
-
-  console.log("👤 User ID:", userId, "Plan ID:", planId)
-
-  if (!userId || !planId) {
-    console.error("❌ Missing metadata in checkout session:", { userId, planId })
-    throw new Error("Missing metadata in checkout session")
+  if (!userId && stripeCustomerId) {
+    const customer = await stripe.customers.retrieve(stripeCustomerId);
+    if (!("deleted" in customer && customer.deleted)) {
+      userId = toPositiveInt(customer.metadata?.userId);
+    }
   }
 
+  if (!userId) {
+    throw new Error(`Could not resolve userId for checkout session ${session.id}`);
+  }
+
+  const externalId = extractStripeId(session.payment_intent) || session.id;
+  const status = session.payment_status === "paid" ? "active" : "pending";
+  const { periodStart, periodEnd } = buildAccessPeriod(session.created);
+
+  const client = await pool.connect();
   try {
-    await pool.query("BEGIN")
-    console.log("🔄 Transaction started")
+    await client.query("BEGIN");
 
-    // Get plan details from our mapping
-    const planName = planId === "junior" ? "Júnior" : planId === "pleno" ? "Pleno" : "Sênior"
-    console.log("📋 Plan name:", planName)
+    const userExists = await ensureUserExists(client, userId);
+    if (!userExists) throw new Error(`User ${userId} not found`);
 
-    const planResult = await pool.query("SELECT id FROM subscription_plans WHERE name = $1", [planName])
-
-    if (planResult.rows.length === 0) {
-      console.error("❌ Plan not found:", planName)
-      await pool.query("ROLLBACK")
-      throw new Error(`Plan not found: ${planName}`)
+    const planDbId = await resolvePlanDbIdForCheckout(client, session);
+    if (!planDbId) {
+      throw new Error(`Could not resolve plan for checkout session ${session.id}`);
     }
 
-    const planDbId = planResult.rows[0].id
-    console.log("🆔 Plan DB ID:", planDbId)
+    await cancelCurrentActivePlans(client, userId);
+    await upsertUserSubscription(client, {
+      userId,
+      planDbId,
+      externalId,
+      stripeCustomerId,
+      status,
+      periodStart,
+      periodEnd,
+    });
 
-    // Get subscription details from Stripe
-    if (!session.subscription) {
-      console.error("❌ No subscription ID in session")
-      await pool.query("ROLLBACK")
-      throw new Error("No subscription ID in session")
-    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
-    const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-    console.log("📊 Stripe subscription retrieved:", subscription.id, "Status:", subscription.status)
+async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
-    // Check if user exists
-    const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [userId])
-    if (userCheck.rows.length === 0) {
-      console.error("❌ User not found:", userId)
-      await pool.query("ROLLBACK")
-      throw new Error(`User not found: ${userId}`)
-    }
+    const { periodStart, periodEnd } = buildAccessPeriod(paymentIntent.created);
 
-    // Deactivate any existing active subscriptions for this user
-    const deactivateResult = await pool.query(
-      `UPDATE user_subscriptions 
-       SET status = 'canceled', updated_at = CURRENT_TIMESTAMP
-       WHERE user_id = $1 AND status IN ('active', 'trialing')
+    const updateExisting = await client.query(
+      `UPDATE user_subscriptions
+         SET status = 'active',
+             current_period_start = COALESCE(current_period_start, $2),
+             current_period_end = COALESCE(current_period_end, $3),
+             updated_at = CURRENT_TIMESTAMP
+       WHERE stripe_subscription_id = $1
        RETURNING id`,
-      [userId],
-    )
+      [paymentIntent.id, periodStart, periodEnd],
+    );
 
-    console.log("🔄 Deactivated existing subscriptions:", deactivateResult.rows.length)
+    if (updateExisting.rows.length > 0) {
+      await client.query("COMMIT");
+      return;
+    }
 
-    // Create new subscription record
-    const insertResult = await pool.query(
-      `INSERT INTO user_subscriptions (
-        user_id, 
-        plan_id, 
-        stripe_subscription_id, 
-        stripe_customer_id, 
-        status,
-        created_at,
-        updated_at
-      ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING id`,
-      [
-        userId,
-        planDbId,
-        subscription.id,
-        session.customer,
-        subscription.status,
-      ],
-    )
+    const stripeCustomerId = extractStripeId(paymentIntent.customer);
+    let userId = toPositiveInt(paymentIntent.metadata?.userId);
+    if (!userId && stripeCustomerId) {
+      const customer = await stripe.customers.retrieve(stripeCustomerId);
+      if (!("deleted" in customer && customer.deleted)) {
+        userId = toPositiveInt(customer.metadata?.userId);
+      }
+    }
 
-    const subscriptionDbId = insertResult.rows[0].id
-    console.log("✅ New subscription created with ID:", subscriptionDbId)
+    if (!userId) {
+      throw new Error(`Could not resolve userId for payment intent ${paymentIntent.id}`);
+    }
 
-    await pool.query("COMMIT")
-    console.log("✅ Transaction committed successfully")
-    console.log(`🎉 Subscription created successfully for user ${userId}, plan ${planName}`)
+    const userExists = await ensureUserExists(client, userId);
+    if (!userExists) throw new Error(`User ${userId} not found`);
+
+    const planDbId = await resolvePlanDbIdForPaymentIntent(client, paymentIntent);
+    if (!planDbId) {
+      throw new Error(`Could not resolve plan for payment intent ${paymentIntent.id}`);
+    }
+
+    await cancelCurrentActivePlans(client, userId);
+    await upsertUserSubscription(client, {
+      userId,
+      planDbId,
+      externalId: paymentIntent.id,
+      stripeCustomerId,
+      status: "active",
+      periodStart,
+      periodEnd,
+    });
+
+    await client.query("COMMIT");
   } catch (error) {
-    await pool.query("ROLLBACK")
-    console.error("💥 Error handling checkout completion:", error)
-    throw error
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
   }
 }
 
-async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  console.log("💰 Handling payment succeeded for invoice:", invoice.id)
-
- if ('subscription' in invoice && invoice.subscription) {
-    const result = await pool.query(
-      `UPDATE user_subscriptions 
-       SET status = 'active', updated_at = CURRENT_TIMESTAMP
-       WHERE stripe_subscription_id = $1
-       RETURNING id, user_id`,
-      [invoice.subscription],
-    )
-
-    console.log("✅ Payment succeeded, updated subscriptions:", result.rows.length)
-    if (result.rows.length > 0) {
-      console.log("👤 Updated subscription for user:", result.rows[0].user_id)
-    }
-  }
+async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
+  await pool.query(
+    `UPDATE user_subscriptions
+       SET status = 'canceled', updated_at = CURRENT_TIMESTAMP
+     WHERE stripe_subscription_id = $1`,
+    [paymentIntent.id],
+  );
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  console.log("❌ Handling payment failed for invoice:", invoice.id)
-
- if ('subscription' in invoice && invoice.subscription) {
-    const result = await pool.query(
-      `UPDATE user_subscriptions 
-       SET status = 'past_due', updated_at = CURRENT_TIMESTAMP
-       WHERE stripe_subscription_id = $1
-       RETURNING id, user_id`,
-      [invoice.subscription],
-    )
-
-    console.log("⚠️ Payment failed, updated subscriptions:", result.rows.length)
-    if (result.rows.length > 0) {
-      console.log("👤 Updated subscription for user:", result.rows[0].user_id)
-    }
-  }
-}
-
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  console.log("🔄 Handling subscription updated:", subscription.id, "Status:", subscription.status)
-
+export async function POST(request: NextRequest) {
   try {
-    const result = await pool.query(
-      `UPDATE user_subscriptions 
-       SET status = $1, 
-           current_period_start = $2, 
-           current_period_end = $3, 
-           updated_at = CURRENT_TIMESTAMP
-       WHERE stripe_subscription_id = $4
-       RETURNING id, user_id`,
-      [
-        subscription.status,
-        subscription.id,
-      ],
-    )
-
-    console.log("✅ Subscription updated, affected rows:", result.rows.length)
-    if (result.rows.length > 0) {
-      console.log("👤 Updated subscription for user:", result.rows[0].user_id)
+    if (!webhookSecret) {
+      console.error("STRIPE_WEBHOOK_SECRET is missing");
+      return NextResponse.json({ error: "Webhook secret is not configured" }, { status: 500 });
     }
+
+    const body = await request.text();
+    const signature = request.headers.get("stripe-signature");
+
+    if (!signature) {
+      return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
+    }
+
+    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case "payment_intent.succeeded":
+        await handlePaymentIntentSucceeded(event.data.object as Stripe.PaymentIntent);
+        break;
+      case "payment_intent.payment_failed":
+        await handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
+        break;
+      default:
+        break;
+    }
+
+    return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("💥 Error updating subscription:", error)
-    throw error
-  }
-}
-
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  console.log("🗑️ Handling subscription deleted:", subscription.id)
-
-  const result = await pool.query(
-    `UPDATE user_subscriptions 
-     SET status = 'canceled', updated_at = CURRENT_TIMESTAMP
-     WHERE stripe_subscription_id = $1
-     RETURNING id, user_id`,
-    [subscription.id],
-  )
-
-  console.log("✅ Subscription deleted, affected rows:", result.rows.length)
-  if (result.rows.length > 0) {
-    console.log("👤 Canceled subscription for user:", result.rows[0].user_id)
+    console.error("Stripe webhook error:", error);
+    return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
   }
 }

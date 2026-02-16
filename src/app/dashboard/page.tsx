@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { BookOpen, User, Trophy, LogOut, CreditCard } from "lucide-react"
 import Link from "next/link"
+import { PortalButton } from "@/components/portal-button"
 
 interface UserData {
   id: number
@@ -56,7 +57,6 @@ export default function DashboardPage() {
       const response = await fetch("/api/protected/user")
       if (response.ok) {
         const data = await response.json()
-        console.log(data)
         setUserData(data)
       } else {
         router.push("/login")
@@ -121,12 +121,16 @@ export default function DashboardPage() {
               <h1 className="text-2xl font-bold text-gray-900">ProvaOnline</h1>
             </div>
             <div className="flex items-center space-x-4">
+
               <span className="text-gray-600">Hello, {userData?.name}</span>
+               <PortalButton /> 
               <Button variant="ghost" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Go out
               </Button>
+             
             </div>
+            
           </div>
         </div>
       </header>

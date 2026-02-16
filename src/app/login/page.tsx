@@ -36,13 +36,13 @@ export default function LoginPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast( "Login successful.")
+        toast.success( "Login successful.")
         router.push("/dashboard")
       } else {
-        toast( data.error || "Invalid credentials.")
+        toast.error( data.error || "Invalid credentials.")
       }
     } catch (error) {
-      toast("Connection error. Please try again.")
+      toast.error("Connection error. Please try again.")
     } finally {
       setLoading(false)
     }

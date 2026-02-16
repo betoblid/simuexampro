@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { redirect, useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +18,7 @@ export default function SubscriptionPage() {
   useEffect(() => {
     const canceled = searchParams.get("canceled")
     if (canceled === "true") {
-      toast( "You can try again whenever you want. If you have any questions, please contact us.")
+      toast("You can try again whenever you want. If you have any questions, please contact us.")
     }
   }, [searchParams, toast])
 
@@ -29,12 +29,12 @@ export default function SubscriptionPage() {
       price: "$ 200",
       period: "/month",
       maxExams: 10,
-       features: ["Up to 10 monthly tests", "Historical results", "Basic Support"],
+      features: ["Up to 10 monthly tests", "Historical results", "Basic Support"],
     },
     {
       id: "pleno",
       name: "Full",
-       price: "$ 350",
+      price: "$ 350",
       period: "/month",
       maxExams: 18,
       features: ["Up to 18 monthly tests", "Detailed history", "Priority Support", "Basic Support"],
@@ -43,7 +43,7 @@ export default function SubscriptionPage() {
     {
       id: "senior",
       name: "Senior",
-       price: "$ 500",
+      price: "$ 500",
       period: "/month",
       maxExams: 25,
       features: ["Up to 25 monthly tests", "Detailed history", "Premium Support", "Exclusive simulations"],
@@ -64,15 +64,23 @@ export default function SubscriptionPage() {
 
       const data = await response.json()
 
-      console.log("Checkout session response:", data)
       if (response.ok) {
         // Redirect to Stripe Checkout
         window.location.href = data.url
-      } else {
-        toast( data.error || "Error processing signaturen. Please try again.")
+
+        // quando a api retorna 404 ou 401 mandar para tela de login
+      } else if (response.status === 401 || response.status === 404) {
+
+        toast.error("Error: your session has expired, please log in to continue");
+        router.push("/login");
+
+      }
+      else {
+        console.log(response)
+        toast.error("Error processing signaturen. Please try again.")
       }
     } catch (error) {
-      toast("Connection error. Please try again.")
+      toast.error("Connection error. Please try again.")
     } finally {
       setLoading(null)
     }
@@ -91,7 +99,7 @@ export default function SubscriptionPage() {
             <Link href="/dashboard">
               <Button variant="ghost">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-               Back to Dashboard
+                Back to Dashboard
               </Button>
             </Link>
           </div>
@@ -102,7 +110,7 @@ export default function SubscriptionPage() {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Choose your Subscription Plan</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-           Select the plan that best suits your study needs. All plans include full access to our platform.
+            Select the plan that best suits your study needs. All plans include full access to our platform.
           </p>
         </div>
 

@@ -52,13 +52,13 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast( "Account created successfully. Please log in to continue.")
+        toast.success( "Account created successfully. Please log in to continue.")
         router.push("/login")
       } else {
-        toast( data.error || "Error creating account. Please try again.")
+        toast.error( data.error || "Error creating account. Please try again.")
       }
     } catch (error) {
-      toast("Connection error. Please try again.")
+      toast.error("Connection error. Please try again.")
     } finally {
       setLoading(false)
     }
